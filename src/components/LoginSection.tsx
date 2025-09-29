@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { User, Lock, ChevronDown, LogIn, LogOut } from 'lucide-react';
+import { User, Lock, ChevronDown, LogIn, LogOut, GraduationCap, BookOpen, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase, signInWithCredentials } from '../lib/supabase';
@@ -10,7 +10,7 @@ const LoginSection: React.FC = () => {
   const [admissionId, setAdmissionId] = useState('');
   const [teacherId, setTeacherId] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('123'); // Default password for demo
+  const [password, setPassword] = useState('123');
   const [role, setRole] = useState('student');
   const [showRoleDropdown, setShowRoleDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,6 @@ const LoginSection: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Load logged user from localStorage
     try {
       const raw = localStorage.getItem('loggedUser');
       if (raw) setLoggedUser(JSON.parse(raw));
@@ -26,7 +25,6 @@ const LoginSection: React.FC = () => {
       // ignore
     }
 
-    // Listen for global auth changes
     const authHandler = (ev: Event) => {
       try {
         const ce = ev as CustomEvent;
@@ -44,9 +42,9 @@ const LoginSection: React.FC = () => {
   }, []);
 
   const roles = [
-    { value: 'student', label: 'Student' },
-    { value: 'teacher', label: 'Teacher' },
-    { value: 'admin', label: 'Administrator' },
+    { value: 'student', label: 'Student', icon: GraduationCap, color: 'from-blue-500 to-blue-600' },
+    { value: 'teacher', label: 'Teacher', icon: BookOpen, color: 'from-green-500 to-green-600' },
+    { value: 'admin', label: 'Administrator', icon: Users, color: 'from-purple-500 to-purple-600' },
   ];
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -64,12 +62,9 @@ const LoginSection: React.FC = () => {
         credentials.email = email;
       }
 
-      console.log('Login attempt:', { role, credentials, password });
       const { user, error } = await signInWithCredentials(credentials, password, role);
-      console.log('Login result:', { user, error });
 
       if (error || !user) {
-        console.error('Login failed:', error);
         toast.error('Invalid credentials. Please try again.');
         return;
       }
@@ -82,12 +77,10 @@ const LoginSection: React.FC = () => {
       localStorage.setItem('loggedUser', JSON.stringify(userState));
       setLoggedUser(userState);
       
-      // Notify other components
       window.dispatchEvent(new CustomEvent('authChanged', { detail: userState }));
       
-      toast.success('Login successful!');
+      toast.success('Welcome back!');
 
-      // Navigate to role-specific dashboard
       if (role === 'teacher') {
         navigate('/teacher-dashboard', { state: { user: userState } });
       } else {
@@ -118,82 +111,114 @@ const LoginSection: React.FC = () => {
     }
   };
 
+  const currentRole = roles.find(r => r.value === role);
+
   return (
-    <section className="bg-gradient-to-br from-blue-50 via-white to-yellow-50 py-12 lg:py-16">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="relative py-20 bg-gradient-to-br from-gray-50 via-white to-blue-50 overflow-hidden">
+      {/* Background decorations */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-blue-200/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-yellow-200/20 rounded-full blur-3xl"></div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Access Your Portal
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Sign in to access your personalized dashboard and stay connected with your academic journey
+          </p>
+        </motion.div>
+
         <div className="max-w-md mx-auto">
           {loggedUser ? (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
               onClick={goToDashboard}
               role="button"
               tabIndex={0}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-6 lg:p-8 border border-white/20 flex items-center gap-4 cursor-pointer hover:shadow-3xl transition-all duration-300 hover:scale-105"
+              className="group bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 border border-white/20 cursor-pointer hover:shadow-3xl transition-all duration-500 hover:scale-105"
             >
-              <div className="relative">
-                <img 
-                  src={loggedUser.profile_photo || '/assest/logo.png'} 
-                  alt="profile" 
-                  className="w-16 h-18 object-cover rounded-xl border-2 border-yellow-200 shadow-lg" 
-                />
-                <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
-              </div>
-              <div className="flex-1">
-                <div className="text-sm text-gray-600 font-medium">Signed in as</div>
-                <div className="text-lg font-bold text-gray-900">{loggedUser.name}</div>
-                <div className="text-sm text-gray-500">
-                  {loggedUser.loggedAs === 'teacher' 
-                    ? `Teacher ID: ${loggedUser.teacher_id}` 
-                    : `Admission ID: ${loggedUser.admission_id}`
-                  }
+              <div className="flex items-center gap-6">
+                <div className="relative">
+                  <div className="w-20 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-xl">
+                    <img 
+                      src={loggedUser.profile_photo || '/assest/logo.png'} 
+                      alt="profile" 
+                      className="w-16 h-20 object-cover rounded-xl border-2 border-white/50" 
+                    />
+                  </div>
+                  <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-green-400 to-green-500 rounded-full border-2 border-white animate-pulse"></div>
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-500 font-medium mb-1">Welcome back</div>
+                  <div className="text-xl font-bold text-gray-900 mb-1">{loggedUser.name}</div>
+                  <div className="text-sm text-gray-600 mb-3">
+                    {loggedUser.loggedAs === 'teacher' 
+                      ? `Teacher ID: ${loggedUser.teacher_id}` 
+                      : `Class ${loggedUser.class_name} • ${loggedUser.section}`
+                    }
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
+                      {loggedUser.loggedAs === 'teacher' ? 'Teacher Portal' : 'Student Portal'}
+                    </div>
+                    <button
+                      onClick={handleLogout}
+                      title="Logout"
+                      className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition-colors duration-200"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
-              <button
-                onClick={handleLogout}
-                title="Logout"
-                aria-label="Logout"
-                className="p-3 rounded-full bg-red-50 hover:bg-red-100 text-red-600 focus:outline-none focus:ring-2 focus:ring-red-200 transition-colors duration-200"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
             </motion.div>
           ) : (
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-2xl p-8 lg:p-10 border border-white/20"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 lg:p-10 border border-white/20"
             >
               <div className="text-center mb-8">
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: 0.2 }}
-                  className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg"
+                  transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                  className={`w-20 h-20 bg-gradient-to-br ${currentRole?.color} rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl`}
                 >
-                  <LogIn className="w-8 h-8 text-white" />
+                  {currentRole?.icon && <currentRole.icon className="w-10 h-10 text-white" />}
                 </motion.div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</h3>
-                <p className="text-gray-600">Access your school account</p>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">Sign In</h3>
+                <p className="text-gray-600">Choose your role and enter your credentials</p>
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="relative">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Login as</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">I am a</label>
                   <div className="relative">
                     <button
                       type="button"
                       onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                      className="w-full bg-white/50 border border-gray-300 rounded-xl px-4 py-3 text-left focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 flex items-center justify-between hover:bg-white/70"
+                      className="w-full bg-gray-50 border-2 border-gray-200 rounded-2xl px-6 py-4 text-left focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 flex items-center justify-between hover:bg-gray-100"
                     >
-                      <span className="capitalize font-medium">{roles.find(r => r.value === role)?.label}</span>
+                      <div className="flex items-center gap-3">
+                        {currentRole?.icon && <currentRole.icon className="w-5 h-5 text-gray-600" />}
+                        <span className="font-medium text-gray-900">{currentRole?.label}</span>
+                      </div>
                       <ChevronDown className={`w-5 h-5 text-gray-400 transition-transform duration-200 ${showRoleDropdown ? 'rotate-180' : ''}`} />
                     </button>
                     {showRoleDropdown && (
                       <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-300 rounded-xl shadow-lg z-10 overflow-hidden"
+                        className="absolute top-full left-0 right-0 mt-2 bg-white border-2 border-gray-200 rounded-2xl shadow-xl z-10 overflow-hidden"
                       >
                         {roles.map((roleOption) => (
                           <button
@@ -203,9 +228,10 @@ const LoginSection: React.FC = () => {
                               setRole(roleOption.value);
                               setShowRoleDropdown(false);
                             }}
-                            className="w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-200 font-medium"
+                            className="w-full text-left px-6 py-4 hover:bg-gray-50 transition-colors duration-200 flex items-center gap-3"
                           >
-                            {roleOption.label}
+                            <roleOption.icon className="w-5 h-5 text-gray-600" />
+                            <span className="font-medium text-gray-900">{roleOption.label}</span>
                           </button>
                         ))}
                       </motion.div>
@@ -216,28 +242,28 @@ const LoginSection: React.FC = () => {
                 {role === 'student' && (
                   <>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Admission ID</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Admission ID</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="text"
                           value={admissionId}
                           onChange={e => setAdmissionId(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your Admission ID"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="password"
                           value={password}
                           onChange={e => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your password"
                           required
                         />
@@ -249,28 +275,28 @@ const LoginSection: React.FC = () => {
                 {role === 'teacher' && (
                   <>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Teacher ID</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Teacher ID</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="text"
                           value={teacherId}
                           onChange={e => setTeacherId(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your Teacher ID"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="password"
                           value={password}
                           onChange={e => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your password"
                           required
                         />
@@ -282,28 +308,28 @@ const LoginSection: React.FC = () => {
                 {role === 'admin' && (
                   <>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Email Address</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Email Address</label>
                       <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="email"
                           value={email}
                           onChange={e => setEmail(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your email"
                           required
                         />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-3">Password</label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                         <input
                           type="password"
                           value={password}
                           onChange={e => setPassword(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition-all duration-200 bg-white/50 hover:bg-white/70"
+                          className="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200 bg-gray-50 hover:bg-white"
                           placeholder="Enter your password"
                           required
                         />
@@ -317,7 +343,7 @@ const LoginSection: React.FC = () => {
                   disabled={loading}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`w-full ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-gradient-to-r from-gray-900 to-gray-800 hover:from-gray-800 hover:to-gray-700'} text-white py-3 rounded-xl font-semibold transition-all duration-300 shadow-lg flex items-center justify-center space-x-2`}
+                  className={`w-full ${loading ? 'bg-gray-400 cursor-not-allowed' : `bg-gradient-to-r ${currentRole?.color} hover:shadow-xl`} text-white py-4 rounded-2xl font-bold transition-all duration-300 shadow-lg flex items-center justify-center space-x-2`}
                 >
                   {loading ? (
                     <>
@@ -325,15 +351,22 @@ const LoginSection: React.FC = () => {
                       <span>Signing In...</span>
                     </>
                   ) : (
-                    <span>Sign In</span>
+                    <>
+                      <LogIn className="w-5 h-5" />
+                      <span>Sign In</span>
+                    </>
                   )}
                 </motion.button>
               </form>
 
-              <div className="mt-6 text-center">
-                <p className="text-sm text-gray-600">
-                  Demo credentials: Use any admission ID from the database with password "123"
-                </p>
+              <div className="mt-8 text-center">
+                <div className="bg-blue-50 rounded-2xl p-4">
+                  <p className="text-sm text-blue-800 font-medium mb-2">Demo Credentials</p>
+                  <div className="text-xs text-blue-600 space-y-1">
+                    <p><strong>Student:</strong> himanshu123 / 123</p>
+                    <p><strong>Teacher:</strong> Avinash / abc</p>
+                  </div>
+                </div>
               </div>
             </motion.div>
           )}
